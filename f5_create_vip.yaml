@@ -1,0 +1,33 @@
+---
+- name: Create VIP
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: include f5_monitor_https
+      include_role:
+        name: f5_monitor_https
+      loop: "{{ servers }}"
+      loop_control:
+        loop_var: server
+
+    - name: include f5_create_pool
+      include_role:
+        name: f5_create_pool
+      loop: "{{ servers }}"
+      loop_control:
+        loop_var: server
+
+    - name: include f5_create_pool_member
+      include_role:
+        name: f5_create_pool_member
+      loop: "{{ servers }}"
+      loop_control:
+        loop_var: server
+
+    - name: include f5_create_vs
+      include_role:
+        name: f5_create_vs
+      loop: "{{ servers }}"
+      loop_control:
+        loop_var: server
+

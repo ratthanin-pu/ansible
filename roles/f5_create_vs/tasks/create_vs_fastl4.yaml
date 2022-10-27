@@ -1,0 +1,70 @@
+- name: Handle error for create pool
+  block:
+    - name: Add virtual server
+      bigip_virtual_server:
+        ip_protocol: "tcp"
+        profiles: 
+          - fastL4
+          - http
+        state: present
+        partition: Common
+        name: "{{ vs_name }}"
+        destination: "{{ destination }}"
+        port: "{{ vs_port }}"
+        pool: "{{ pool_name }}"
+        snat: "automap"
+        enabled_vlans: "all"
+        type: "performance-l4"
+        default_persistence_profile: "{{ persistence_profile | default('source_addr')}}"
+        provider: 
+          server: "{{ server }}"
+          user: "{{ provider.user }}"
+          password: "{{ provider.password }}"
+          validate_certs: no
+      delegate_to: localhost
+
+    - debug: 
+        msg: Create virtual server FastL4 successful
+  rescue:
+    # - set_fact: 
+    #     delete_member: "{{ host }}"
+
+    # - name: set rollback_role
+    #   set_fact:
+    #     rollback_task: "{{ [ 'roles/f5_delete_vs' ] }} + {{ rollback_task }}"
+    #   vers:
+    #     rollback_task: []
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "{{ item }}"
+    #   ignore_errors: yes
+    #   loop: "{{ rollback_task }}"
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_vs"
+    #   ignore_errors: yes
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_pool_member"
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_pool"
+    #   ignore_errors: yes
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_monitor_https"
+    #   ignore_errors: yes
+
+    - set_fact:
+        fail_status: "failed"
+        fail_message: "Virtual IP Address {{ destination }}: {{ vs_port }}"
+    
+    - debug:
+        msg: Failed at Create Virtual Servers FastL4
+      failed_when: true
+

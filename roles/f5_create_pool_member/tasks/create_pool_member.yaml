@@ -1,0 +1,63 @@
+- name: Handle Error for create pool member
+  block:
+    - name: Create pool member
+      bigip_pool_member:
+        name: "{{ member.split(':')[0] }}"
+        pool: "{{ pool_name }}"
+        host: "{{ member.split(':')[1] }}"
+        port: "{{ member.split(':')[2] }}"
+        state: "{{ pool_member_state }}"
+        connection_limit: "{{ connection_limit | default('0')}}"
+        provider: 
+          server: "{{ server }}"
+          user: "{{ provider.user }}"
+          password: "{{ provider.password }}"
+          validate_certs: no
+      delegate_to: localhost
+
+    - debug: 
+        msg: Create Pool Members successful
+
+    # - set_fact:
+    #     created_member: "{{ [ member ] }} + {{ created_member }}"
+    #   vars:
+    #     created_member: []
+
+  rescue:
+    # - set_fact: 
+    #     delete_member: "{{ created_member }}"
+
+    # - name: set rollback_role
+    #   set_fact:
+    #     rollback_task: "{{ [ 'roles/f5_delete_pool_member' ] }} + {{ rollback_task }}"
+    #   vers:
+    #     rollback_task: []
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "{{ item }}"
+    #   ignore_errors: yes
+    #   loop: "{{ rollback_task }}"
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_pool_member"
+    #   ignore_errors: yes
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_pool"
+    #   ignore_errors: yes
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_monitor_https"
+    #   ignore_errors: 
+      
+    #- set_fact:
+    #    fail_status: 'failed'
+
+    - fail:
+        msg: Failed at Create Pool members
+      #failed_when: true
+    

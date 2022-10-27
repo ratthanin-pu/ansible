@@ -1,0 +1,91 @@
+- name: Check virtual servers exsit?
+  block:
+    - name: Collect BIG-IP information
+      bigip_device_info:
+        gather_subset:
+          - virtual-servers
+        provider: 
+          server: "{{ server }}"
+          user: "{{ provider.user }}"
+          password: "{{ provider.password }}"
+          validate_certs: no
+      delegate_to: localhost
+      register: vs_fact
+
+    - set_fact:
+        fail_status: succeeded
+
+    - name: Check vs_type = 'standard' is correct
+      debug:
+        msg: "vs_type {{ vs_type }} correct?"
+      when: ( vs_type == 'standard')
+      register: standard_check
+
+    - name: Check vs_type = 'performance-l4' is correct
+      debug:
+        msg: "vs_type {{ vs_type }} correct?"
+      when: ( vs_type == 'performance-l4')
+      register: l4_check
+
+    - name: Check vs_type is correct
+      debug:
+        msg: "{{ vs_type }}"
+      failed_when: ( standard_check is not skipped ) and ( l4_check is not skipped )
+
+    - set_fact:
+        vs_name_fact: "{{ item.name }}"
+      loop: "{{ vs_fact.virtual_servers }}"
+      when: (( item.destination_address == destination ) and ( item.destination_port == vs_port )) or ( item.name == vs_name)
+      register: check_vs
+
+    - debug:
+        msg: Check "{{ vs_name }} "
+      failed_when: vs_name_fact is defined
+
+    - name: Import Create VS standard
+      import_tasks: create_vs.yml
+      when: (vs_type == "standard") and (vs_name_fact is not defined)
+
+    - name: Import Create VS fastl4
+      import_tasks: create_vs_fastl4.yml
+      when: (vs_type == "performance-l4") and (vs_name_fact is not defined)
+      
+  rescue:
+    # - set_fact: 
+    #     delete_member: "{{ host }}"
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_vs"
+    #   ignore_errors: yes
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_pool_member"
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_pool"
+    #   ignore_errors: yes
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_monitor_https"
+    #   ignore_errors: yes
+
+    # - debug:
+    #     msg: "Virtual Servers type not correct"
+    #   failed_when: true
+    #   when: vs_type_check is failed
+
+    - debug:
+        msg: "Virtual Servers {{ vs_name }} was exist "
+      failed_when: true
+      when: (fail_status != 'failed') and ( vs_type_check is not failed)
+      
+    - debug:
+        msg: "{{ fail_message }}"
+      failed_when: true
+      when: fail_status == 'failed'
+    
+

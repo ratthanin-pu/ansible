@@ -1,0 +1,47 @@
+    - name: Handle error for create pool
+      block:
+        - name: Create pool
+          bigip_pool:
+            state: present
+            name: "{{ pool_name }}"
+            lb_method: "{{ load_balance_method }}"
+            monitors: "{{ monitor_name }}"
+            provider: 
+              server: "{{ server }}"
+              user: "{{ provider.user }}"
+              password: "{{ provider.password }}"
+              validate_certs: no
+          delegate_to: localhost
+
+        - debug: 
+            msg: Create Pool successful
+      rescue:
+        # - name: set rollback_role
+        #   set_fact:
+        #     rollback_task: "{{ [ 'roles/f5_delete_pool' ] }} + {{ rollback_task }}"
+        #   vers:
+        #     rollback_task: []
+
+        # - name: import role delete
+        #   import_role:
+        #     name: "{{ item }}"
+        #   ignore_errors: yes
+        #   loop: "{{ rollback_task }}"
+
+        # - name: import role delete
+        #   import_role:
+        #     name: "roles/f5_delete_pool"
+        #   ignore_errors: yes
+
+        # - name: import role delete
+        #   import_role:
+        #     name: "roles/f5_delete_monitor_https"
+        #   ignore_errors: yes
+
+        - set_fact:
+            fail_status: 'failed'
+
+        - debug:
+            msg: Failed at Create Pool
+          failed_when: true
+          

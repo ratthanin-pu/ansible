@@ -1,0 +1,62 @@
+- name: Handle error for create pool
+  block:
+    - name: Add virtual server
+      bigip_virtual_server:
+        ip_protocol: "tcp"
+        state: present
+        partition: Common
+        name: "{{ vs_name }}"
+        destination: "{{ destination }}"
+        port: "{{ vs_port }}"
+        pool: "{{ pool_name }}"
+        snat: "automap"
+        profiles: 
+          - tcp
+          - "{{ http_client_side }}"
+          - name: "custom_serverssl"
+            context: server-side
+          - name: "{{ ssl_client_side }}"
+            context: client-side
+        enabled_vlans: "all"
+        type: "standard"
+        #Commented out 02-JUN-2565 Request by P'Ball Middleware
+        #default_persistence_profile: "{{ persistence_profile | default('source_addr')}}"
+        provider: 
+          server: "{{ server }}"
+          user: "{{ provider.user }}"
+          password: "{{ provider.password }}"
+          validate_certs: no
+      delegate_to: localhost
+
+    - debug: 
+        msg: Create virtual server standard successful
+  rescue:
+    # - set_fact: 
+    #     delete_member: "{{ host }}"
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_vs"
+    #   ignore_errors: yes
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_pool_member"
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_pool"
+    #   ignore_errors: yes
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_monitor_https"
+    #   ignore_errors: yes
+    
+    - set_fact:
+        fail_status: 'failed'
+    
+    - debug:
+        msg: Failed at Create Virtual Servers Standard
+      failed_when: true
+

@@ -1,0 +1,42 @@
+- name: Handle Error For Create HTTPS Monitor
+  block:
+    - name: Create HTTPS Monitor
+      bigip_monitor_https:
+            name: "{{ monitor_name }}"
+            interval: 5
+            timeout: 16
+            state: present
+            provider: 
+                server: "{{ server }}"
+                user: "{{ provider.user }}"
+                password: "{{ provider.password }}"
+                validate_certs: no
+      delegate_to: localhost
+
+    - name: Create HTTPS Monitor successful
+      debug:
+        msg: Create HTTPS Monitor successful
+  rescue:
+    # - name: set rollback_role
+    #   set_fact:
+    #     rollback_task: "{{ [ 'roles/f5_delete_monitor_https' ] }} + {{ rollback_task }}"
+    #   vers:
+    #     rollback_task: []
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "{{ item }}"
+    #   ignore_errors: yes
+    #   loop: "{{ rollback_task }}"
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_monitor_https"
+    #   ignore_errors: yes
+
+    #- set_fact:
+    #    fail_status: 'failed'
+
+    - fail:
+        msg: Failed at Create HTTPS Monitor
+    #  failed_when: true

@@ -1,0 +1,7 @@
+- name: include create pool member
+  include_tasks: create_pool_member.yml
+  loop: "{{ host }}"
+  loop_control:
+    loop_var: member
+
+

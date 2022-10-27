@@ -1,0 +1,50 @@
+- name: Check Pool exsit?
+  block:
+    - name: Collect BIG-IP information
+      bigip_device_info:
+        gather_subset:
+          - ltm-pools
+        provider: 
+          server: "{{ server }}"
+          user: "{{ provider.user }}"
+          password: "{{ provider.password }}"
+          validate_certs: no
+      delegate_to: localhost
+      register: pool_fact
+
+    - set_fact:
+        fail_status: succeeded
+
+    - set_fact:
+          check_pool: "{{ item.name }}"
+      loop: "{{ pool_fact.ltm_pools }}"
+      when: ( item.name == pool_name)
+      
+    - debug:
+        msg: Check "{{ pool_name }} "
+      failed_when: check_pool is defined
+
+    - name: include task create_pool.yml
+      include_tasks: create_pool.yml
+
+  rescue:
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_pool"
+    #   ignore_errors: yes
+
+    # - name: import role delete
+    #   import_role:
+    #     name: "roles/f5_delete_monitor_https"
+    #   ignore_errors: yes
+    
+    - fail:
+        msg: Pool {{ pool_name }} was exist.
+      #failed_when: true
+      when: (fail_status != 'failed')
+      
+  
+      
+    
+
+
